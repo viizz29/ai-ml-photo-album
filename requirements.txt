@@ -11,3 +11,4 @@ pydantic-settings
 face_recognition 
 opencv-python-headless
 numpy
+hashids
