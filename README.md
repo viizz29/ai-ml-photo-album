@@ -17,6 +17,15 @@ Start the API:
 docker compose up --build
 ```
 
+To store uploads outside the repo, set these in `.env` before starting Compose:
+
+```env
+FACE_IMAGE_UPLOAD_DIR=/app/images
+HOST_FACE_IMAGE_UPLOAD_DIR=/home/xyz/data/app/uploads
+```
+
+`HOST_FACE_IMAGE_UPLOAD_DIR` is the real host folder, and `FACE_IMAGE_UPLOAD_DIR` is the path the API uses inside the container. For a non-Docker local run, you can point `FACE_IMAGE_UPLOAD_DIR` directly at an absolute folder such as `/home/xyz/data/app/uploads`.
+
 Apply database migrations after the containers are up:
 
 ```bash
@@ -30,6 +39,12 @@ docker compose exec api alembic stamp head
 ```
 
 Create a new migration after changing SQLAlchemy models:
+
+```bash
+docker compose exec api alembic revision -m "describe change"
+```
+
+or
 
 ```bash
 docker compose exec api alembic revision --autogenerate -m "describe change"

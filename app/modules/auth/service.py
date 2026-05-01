@@ -20,7 +20,7 @@ class AuthService:
             return None
         token = create_access_token({"sub": user.email})
         return {
-            "access_token": token,
+            "token": token,
             "user": {
                 "id": user.id,
                 "name": user.name,

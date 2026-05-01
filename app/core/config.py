@@ -8,10 +8,15 @@ class Settings(BaseSettings):
     )
 
     DATABASE_URL: str = "postgresql://user:password@db:5432/app"
+    APP_ENV: str = "development"
     SECRET_KEY: str = "supersecret"
     ALGORITHM: str = "HS256"
     HASHIDS_SALT: str = "change-me"
-    FACE_IMAGE_UPLOAD_DIR: str = "app/images/uploads"
+    FACE_IMAGE_UPLOAD_DIR: str = "images"
     FACE_MATCH_TOLERANCE: float = 0.48
+    AZURE_OPENAI_API_KEY: str | None = None
+    AZURE_OPENAI_ENDPOINT: str | None = None
+    AZURE_OPENAI_DEPLOYMENT: str | None = None
+    AZURE_OPENAI_API_VERSION: str = "2025-01-01-preview"
 
 settings = Settings()

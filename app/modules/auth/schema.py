@@ -1,37 +1,40 @@
 # =========================
 # modules/auth/schema.py
 # =========================
-from pydantic import BaseModel
+from pydantic import ConfigDict
+
+from app.core.schema import CamelCaseSchema, to_camel
 
 
-class RegisterDto(BaseModel):
+class RegisterDto(CamelCaseSchema):
     email: str
     name: str
     password: str
 
 
-class LoginDto(BaseModel):
-    model_config = {
-        "json_schema_extra": {
+class LoginDto(CamelCaseSchema):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "email": "user1@example.com",
                 "password": "password123",
             }
-        }
-    }
+        },
+    )
 
     email: str
     password: str
 
 
-class UserResponseDto(BaseModel):
+class UserResponseDto(CamelCaseSchema):
     id: int
     name: str
     email: str
 
-    model_config = {"from_attributes": True}
 
-
-class LoginResponseDto(BaseModel):
-    access_token: str
+class LoginResponseDto(CamelCaseSchema):
+    token: str
     user: UserResponseDto

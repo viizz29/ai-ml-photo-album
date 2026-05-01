@@ -1,19 +1,14 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
+
+from app.core.routing import HashIdRoute
+
+from .dependencies import get_db
 from .schema import LoginDto, LoginResponseDto, RegisterDto, UserResponseDto
 from .service import AuthService
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["auth"], route_class=HashIdRoute)
 service = AuthService()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/register", response_model=UserResponseDto)
