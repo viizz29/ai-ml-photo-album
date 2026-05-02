@@ -21,4 +21,4 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-      - ${HOST_FACE_IMAGE_UPLOAD_DIR:-./public/data}:${FACE_IMAGE_UPLOAD_DIR:-/public/data}
+      - ${HOST_STORAGE_DIR:-./public/data}:${STORAGE_DIR:-/public/data}

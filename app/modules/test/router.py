@@ -9,7 +9,7 @@ from app.core.routing import HashIdRoute
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-router = APIRouter(prefix="/test", tags=["test"], route_class=HashIdRoute)
+router = APIRouter(prefix="/v1/test", tags=["test"], route_class=HashIdRoute)
 
 @router.get("/test1")
 def test1():

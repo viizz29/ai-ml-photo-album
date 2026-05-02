@@ -7,7 +7,7 @@ from app.modules.auth.model import User
 
 from .service import AlbumService
 
-router = APIRouter(prefix="/albums", tags=["albums"], route_class=HashIdRoute)
+router = APIRouter(prefix="/v1/albums", tags=["albums"], route_class=HashIdRoute)
 service = AlbumService()
 
 

@@ -12,7 +12,7 @@ from .service import PersonImagesService
 from .schema import PersonImageResponseDto
 from app.core.schema import HashIdParam
 
-router = APIRouter(prefix="/person-images", tags=["person-images"], route_class=HashIdRoute)
+router = APIRouter(prefix="/v1/person-images", tags=["person-images"], route_class=HashIdRoute)
 service = PersonImagesService()
 
 # @router.get("",  response_model=list[RecognizedFaceResponseDto])

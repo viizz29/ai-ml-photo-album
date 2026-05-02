@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib import error, request
 from uuid import uuid4
 
+import cv2
 import face_recognition
 from fastapi import HTTPException, UploadFile
 from sqlalchemy import func
@@ -18,14 +19,15 @@ from app.modules.person_images.model import PersonImage
 
 
 class ImagesService:
-    def recognize_and_store(self, db: Session, image_file: UploadFile, user_id: int):
+    def process_and_store(self, db: Session, image_file: UploadFile, user_id: int):
         if not image_file.filename:
             raise HTTPException(status_code=400, detail="Image filename is required")
 
         if not image_file.content_type or not image_file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Only image uploads are supported")
 
-        upload_dir = Path(settings.FACE_IMAGE_UPLOAD_DIR)
+        upload_dir = Path(f"{settings.STORAGE_DIR}/uploads/{user_id}")
+        
         upload_dir.mkdir(parents=True, exist_ok=True)
 
         safe_filename = f"{uuid4()}_{os.path.basename(image_file.filename)}"
@@ -53,20 +55,26 @@ class ImagesService:
             db.refresh(image_record)
             return image_record
 
-        existing_faces = db.query(Person).all()
+        existing_faces = db.query(Person).filter(Person.user_id == user_id).all()
 
         for face_location, face_encoding in zip(face_locations, face_encodings):
             best_match = self._match_face(
                 existing_faces,
                 face_encoding,
             )
-            
-        
-            # it's a new face, create a new person record, and new person_image record
+
+            top, right, bottom, left = face_location
+
+            # It's a new face, create a new person record and keep a cropped face image.
             if best_match is None:
-                top, right, bottom, left = face_location
+                face_image_path = self._store_face_image(
+                    source_image=image,
+                    face_location=face_location,
+                    user_id=user_id,
+                )
                 person_record = Person(
                     user_id=user_id,
+                    face_image_path=face_image_path,
                     encoding=json.dumps(face_encoding.tolist()),
                 )
                 db.add(person_record)
@@ -85,9 +93,8 @@ class ImagesService:
                 db.flush()
                 
                 existing_faces.append(person_record)
-            else:     
+            else:
                 person_id = best_match.id
-                top, right, bottom, left = face_location
                 person_image_record = PersonImage(
                     user_id=user_id,
                     person_id=person_id,
@@ -104,13 +111,29 @@ class ImagesService:
         db.refresh(image_record)
         return image_record
 
-    def list_images(self, db: Session):
-        return db.query(Image).order_by(Image.created_at.desc()).all()
+    def list_images(self, db: Session, user_id: int):
+        return (
+            db.query(Image)
+            .filter(Image.user_id == user_id)
+            .order_by(Image.created_at.desc())
+            .all()
+        )
 
-    def get_image(self, db: Session, image_id: int):
-        image = db.query(Image).filter(Image.id == image_id).first()
+    def get_image(self, db: Session, user_id: int, image_id: int):
+        image = (
+            db.query(Image)
+            .filter(Image.id == image_id, Image.user_id == user_id)
+            .first()
+        )
         if image is None:
             raise HTTPException(status_code=404, detail="Image not found")
+        return image
+
+    def get_image_file(self, db: Session, user_id: int, image_id: int) -> Image:
+        image = self.get_image(db, user_id, image_id)
+        image_path = Path(image.stored_path)
+        if not image_path.is_file():
+            raise HTTPException(status_code=404, detail="Stored image file not found")
         return image
 
     def get_random_image(self, db: Session, user_id: int):
@@ -155,6 +178,42 @@ class ImagesService:
                     best_face = face
 
         return best_face
+
+    def _store_face_image(self, source_image, face_location, user_id: int) -> str:
+        top, right, bottom, left = face_location
+        image_height, image_width = source_image.shape[:2]
+        face_width = right - left
+        face_height = bottom - top
+
+        # Keep a little extra context around the face so the saved preview is usable.
+        extra_left = int(face_width * 0.35)
+        extra_right = int(face_width * 0.35)
+        extra_top = int(face_height * 0.7)
+        extra_bottom = int(face_height * 0.45)
+
+        crop_left = max(0, left - extra_left)
+        crop_right = min(image_width, right + extra_right)
+        crop_top = max(0, top - extra_top)
+        crop_bottom = min(image_height, bottom + extra_bottom)
+
+        cropped_image = source_image[crop_top:crop_bottom, crop_left:crop_right]
+        if cropped_image.size == 0:
+            raise HTTPException(status_code=500, detail="Failed to crop face image")
+
+        face_dir = Path(settings.STORAGE_DIR) / "faces" / str(user_id)
+        face_dir.mkdir(parents=True, exist_ok=True)
+
+        face_filename = f"{uuid4()}.png"
+        face_path = face_dir / face_filename
+
+        success = cv2.imwrite(
+            str(face_path),
+            cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR),
+        )
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to store face image")
+
+        return str(face_path)
 
     def _generate_commentary(self, image: Image) -> str:
         self._validate_azure_openai_settings()

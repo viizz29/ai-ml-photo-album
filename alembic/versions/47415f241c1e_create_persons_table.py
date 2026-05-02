@@ -21,6 +21,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("name", sa.String(), nullable=True),
+        sa.Column("face_image_path", sa.String(), nullable=False),
         sa.Column("encoding", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

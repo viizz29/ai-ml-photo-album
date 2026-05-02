@@ -30,7 +30,7 @@ class RecognizedFaceResponseDto(CamelCaseSchema):
 class ImageResponseDto(CamelCaseSchema):
     id: int
     filename: str
-    stored_path: str
+    # stored_path: str
     content_type: str | None
     created_at: datetime
 

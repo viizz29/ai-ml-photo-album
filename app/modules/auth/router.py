@@ -7,7 +7,7 @@ from .dependencies import get_db
 from .schema import LoginDto, LoginResponseDto, RegisterDto, UserResponseDto
 from .service import AuthService
 
-router = APIRouter(prefix="/auth", tags=["auth"], route_class=HashIdRoute)
+router = APIRouter(prefix="/v1/auth", tags=["auth"], route_class=HashIdRoute)
 service = AuthService()
 
 

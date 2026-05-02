@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, Security, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.routing import HashIdRoute
@@ -9,17 +10,17 @@ from app.modules.auth.model import User
 from .schema import ImageResponseDto, RandomImageResponseDto
 from .service import ImagesService
 
-router = APIRouter(prefix="/images", tags=["images"], route_class=HashIdRoute)
+router = APIRouter(prefix="/v1/images", tags=["images"], route_class=HashIdRoute)
 service = ImagesService()
 
 
 @router.post("", response_model=ImageResponseDto)
-def upload(
+def process_and_store(
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Security(get_current_user),
 ):
-    return service.recognize_and_store(db, image, current_user.id)
+    return service.process_and_store(db, image, current_user.id)
 
 
 @router.get("", response_model=list[ImageResponseDto])
@@ -27,7 +28,7 @@ def get_images(
     db: Session = Depends(get_db),
     current_user: User = Security(get_current_user),
 ):
-    items =  service.list_images(db)
+    items = service.list_images(db, current_user.id)
     return items
 
 
@@ -41,4 +42,18 @@ def get_random_image(
 
 @router.get("/{image_id}", response_model=ImageResponseDto)
 def get_image(image_id: HashIdParam, db: Session = Depends(get_db), current_user: User = Security(get_current_user)):
-    return service.get_image(db, image_id)
+    return service.get_image(db, current_user.id, image_id)
+
+
+@router.get("/{image_id}/file")
+def get_image_file(
+    image_id: HashIdParam,
+    db: Session = Depends(get_db),
+    current_user: User = Security(get_current_user),
+):
+    image = service.get_image_file(db, current_user.id, image_id)
+    return FileResponse(
+        path=image.stored_path,
+        media_type=image.content_type or "application/octet-stream",
+        filename=image.filename,
+    )

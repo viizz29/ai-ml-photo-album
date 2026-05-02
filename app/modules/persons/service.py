@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,13 @@ class PersonsService:
         person = db.query(Person).filter(Person.user_id == user_id, Person.id == person_id).first()
         if person is None:
             raise HTTPException(status_code=404, detail="Person not found")
+        return person
+
+    def get_person_face_image(self, db: Session, user_id: int, person_id: int) -> Person:
+        person = self.get_person(db, user_id, person_id)
+        face_image_path = Path(person.face_image_path)
+        if not face_image_path.is_file():
+            raise HTTPException(status_code=404, detail="Stored face image file not found")
         return person
 
     def set_person_name(self, db: Session, user_id: int, person_id: int, name: str):

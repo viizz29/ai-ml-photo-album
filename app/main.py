@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,11 +14,20 @@ from app.modules.albums.router import router as albums_router
 from app.modules.person_images.router import router as person_images_router
 
 DOCS_URL = "/docs"
+API_PREFIX = "/api"
 
 app = FastAPI(
     default_response_class=HashIdJSONResponse,
     docs_url=None,
     redoc_url=None,
+    openapi_url=f"{API_PREFIX}/openapi.json",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.mount("/public", StaticFiles(directory="public"), name="public")
 
@@ -45,9 +55,9 @@ def custom_swagger_ui_html() -> HTMLResponse:
     )
     return HTMLResponse(html)
 
-app.include_router(auth_router)
-app.include_router(images_router)
-app.include_router(test_router)
-app.include_router(persons_router)
-app.include_router(albums_router)
-app.include_router(person_images_router)
+app.include_router(auth_router, prefix=API_PREFIX)
+app.include_router(images_router, prefix=API_PREFIX)
+app.include_router(test_router, prefix=API_PREFIX)
+app.include_router(persons_router, prefix=API_PREFIX)
+app.include_router(albums_router, prefix=API_PREFIX)
+app.include_router(person_images_router, prefix=API_PREFIX)
