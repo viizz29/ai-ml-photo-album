@@ -13,5 +13,5 @@ service = AlbumService()
 
 
 @router.get("")
-def get_list(db: Session = Depends(get_db)):
-    return service.get_albums(db)
+def get_list(db: Session = Depends(get_db), current_user: User = Security(get_current_user),):
+    return service.get_albums(db, current_user.id)
