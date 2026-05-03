@@ -111,13 +111,37 @@ class ImagesService:
         db.refresh(image_record)
         return image_record
 
-    def list_images(self, db: Session, user_id: int):
-        return (
-            db.query(Image)
-            .filter(Image.user_id == user_id)
-            .order_by(Image.created_at.desc())
+    def list_images(
+        self,
+        db: Session,
+        user_id: int,
+        search: str | None = None,
+        cursor_id: int | None = None,
+        limit: int = 20,
+    ):
+        query = db.query(Image).filter(Image.user_id == user_id)
+
+        normalized_search = search.strip() if search else None
+        if normalized_search:
+            query = query.filter(Image.commentary.ilike(f"%{normalized_search}%"))
+
+        if cursor_id is not None:
+            query = query.filter(Image.id < cursor_id)
+
+        images = (
+            query.order_by(Image.id.desc())
+            .limit(limit + 1)
             .all()
         )
+
+        has_more = len(images) > limit
+        items = images[:limit]
+        next_cursor_id = items[-1].id if has_more and items else None
+
+        return {
+            "items": items,
+            "next_cursor_id": next_cursor_id,
+        }
 
     def get_image(self, db: Session, user_id: int, image_id: int):
         image = (

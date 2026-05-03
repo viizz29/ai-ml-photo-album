@@ -35,6 +35,10 @@ class ImageResponseDto(CamelCaseSchema):
     created_at: datetime
 
 
+class ImageListResponseDto(CamelCaseSchema):
+    items: list[ImageResponseDto]
+    next_cursor_id: int | None
+
+
 class RandomImageResponseDto(ImageResponseDto):
     commentary: str
-

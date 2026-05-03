@@ -8,7 +8,7 @@ from app.core.database import Base
 from app.modules.auth.model import User
 from app.modules.images.model import Image
 from app.modules.persons.model import Person
-from app.modules.albums.model import Album
+from app.modules.albums.model import Album, AlbumImage
 from app.modules.person_images.model import PersonImage
 
 
